@@ -16,7 +16,14 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
-from e2e_support import AppServer, make_photo, open_app, open_backups, open_screen
+from e2e_support import (
+    AppServer,
+    hold_the_next_job_until_cancelled,
+    make_photo,
+    open_app,
+    open_backups,
+    open_screen,
+)
 from playwright.sync_api import Page, expect
 from truestill_core.catalog import Catalog
 from truestill_core.destinations.base import CrossDeviceError
@@ -106,10 +113,15 @@ def test_look_inside_returns_before_duplicate_check(ui: Page, tmp_path: Path, li
 
 
 @_EXIFTOOL
-def test_cancel_actually_stops_an_organize(ui: Page, tmp_path: Path) -> None:
+def test_cancel_actually_stops_an_organize(
+    ui: Page, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """The Cancel button was wired, but cancelling mid-hash crashed the job with a KeyError
     that reached the UI as a bare file path. Asserted on outcome, never on timing: the run
-    must stop having placed fewer files than the source held."""
+    must stop having placed fewer files than the source held.
+
+    The job is HELD mid-run until the Cancel request arrives (``e2e_support``), so the click can
+    no longer lose a race against a run that finishes in about a second."""
     source = tmp_path / "many"
     for i in range(400):
         make_photo(source / f"IMG_{i:04d}.jpg", i, size=(700, 520))
@@ -126,11 +138,14 @@ def test_cancel_actually_stops_an_organize(ui: Page, tmp_path: Path) -> None:
     # copying, `move` when moving - and these tests are about other behaviour entirely;
     # `test_the_confirm_word_names_the_run` is what guards the word itself.
     typed.fill((typed.get_attribute("placeholder") or "type move").removeprefix("type "))
+    hold = hold_the_next_job_until_cancelled(monkeypatch, after=5)
     ui.click("#org-confirm [data-typed-go]")
     expect(ui.locator("#org-card")).to_be_visible()
+    assert hold.reached.wait(60), "the run never got as far as the hold"
     ui.click("#org-cancel")
 
     expect(ui.locator("#org-card")).to_be_hidden(timeout=60_000)
+    assert hold.released_by_cancel, "the job carried on before Cancel arrived"
     expect(ui.locator("body")).not_to_contain_text("NaN")
     organized = list(destination.rglob("*.jpg")) if destination.exists() else []
     assert len(organized) < 400, "cancel did not stop the run"
