@@ -8,6 +8,8 @@ basename no other test directory claims.
 
 from __future__ import annotations
 
+import json
+import re
 import secrets
 import socket
 import subprocess
@@ -185,6 +187,7 @@ def open_app(page: Page, url: str) -> Page:
     its readiness folds in the shell's loads, so waiting here covers both.
     """
     page.set_default_timeout(15_000)
+    record_job_events(page)
     page.goto(url)
     expect(page.locator(".screen.active")).to_have_attribute("data-ready", "ready")
     return page
@@ -270,3 +273,59 @@ def release_held(held: list[Any], *, body: str | None = None) -> None:
         else:
             route.fulfill(status=200, content_type="application/json", body=body)
     held.clear()
+
+
+#: Runs in the page before any of its own scripts. It wraps ``EventSource`` so every job stream the
+#: page opens leaves a line in ``window.__jobEvents``: opened, each message (its type, and for a
+#: progress frame the counts; for the end of a job its status), each error with the stream's
+#: ``readyState``. **Never the file names, never the URL's query** (it carries the session token).
+#: Why: on 2026-10-31 a WebKit run accepted a job (``POST /api/organize/run`` answered 200) and the
+#: screen never showed its result; the Playwright trace records requests, not the frames inside an
+#: event stream, so nobody could say whether the end of the job reached the page.
+_RECORD_JOB_EVENTS = """
+(() => {
+  const Native = window.EventSource;
+  if (!Native || window.__jobEvents) return;
+  const log = (window.__jobEvents = []);
+  const t0 = performance.now();
+  const note = (kind, source, extra) => log.push({
+    ms: Math.round(performance.now() - t0), kind,
+    job: String(source.url).split("?")[0].split("/")[5] || "", ...extra,
+  });
+  window.EventSource = class extends Native {
+    constructor(url, init) {
+      super(url, init);
+      note("open", this, { readyState: this.readyState });
+      this.addEventListener("message", (e) => {
+        let d = {};
+        try { d = JSON.parse(e.data); } catch (err) { d = { type: "unparseable" }; }
+        note("message", this, {
+          type: d.type, status: d.status, done: d.done, total: d.total, phase: d.phase,
+          readyState: this.readyState,
+        });
+      });
+      this.addEventListener("error", () => note("error", this, { readyState: this.readyState }));
+    }
+  };
+})();
+"""
+
+
+def record_job_events(page: Page) -> None:
+    """Start recording the job streams the page opens. Must run before the page loads."""
+    page.add_init_script(_RECORD_JOB_EVENTS)
+
+
+def job_events_seen(page: Page) -> list[dict[str, Any]]:
+    """What the page's job streams delivered so far, oldest first (empty when none opened)."""
+    seen = page.evaluate("window.__jobEvents || []")
+    return [dict(line) for line in seen] if isinstance(seen, list) else []
+
+
+def save_job_events(page: Page, folder: Path, test_id: str) -> Path:
+    """Write the recording next to a failed test's trace, as ``<folder>/<test id>.json``."""
+    folder.mkdir(parents=True, exist_ok=True)
+    name = re.sub(r"[^A-Za-z0-9._-]+", "-", test_id).strip("-")[:150]
+    path = folder / f"{name}.json"
+    path.write_text(json.dumps(job_events_seen(page), indent=2) + "\n", encoding="utf-8")
+    return path

@@ -30,8 +30,10 @@ from e2e_support import (
     boot_app,
     make_photo,
     open_app,
+    save_job_events,
     stamp_capture_date,
 )
+from playwright._impl._errors import Error as PlaywrightError
 from playwright.sync_api import Page, expect
 
 #: The assertion budget, raised from Playwright's 5 s default on 2026-08-15.
@@ -134,3 +136,24 @@ def library(tmp_path: Path):
         return root
 
     return _build
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item: pytest.Item) -> Iterator[None]:
+    """A failed browser test leaves its job-stream recording beside its trace.
+
+    The upload step takes everything under the output folder, so ``job-events/<test id>.json`` rides
+    with the trace and the video. It must never turn a failure into a different one, so a page that
+    is already gone is noted in the report instead of raised.
+    """
+    outcome = yield
+    report = outcome.get_result()
+    if report.when != "call" or not report.failed:
+        return
+    page = item.funcargs.get("page")
+    if page is None:
+        return
+    try:
+        save_job_events(page, Path(item.config.getoption("--output")) / "job-events", item.nodeid)
+    except (PlaywrightError, OSError) as err:
+        item.add_report_section("call", "job events", f"could not record the job events: {err}")
