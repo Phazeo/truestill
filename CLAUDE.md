@@ -14,6 +14,20 @@ disagree. Its day-to-day guidance is §"Working here" below, unchanged. ⚠ Olde
 are deliberately not edited** - a record rewritten to stay correct stops being one - so this note
 is what resolves the pointer.
 
+## Until the Rust rewrite: minimal investment (owner, 2026-10-31)
+
+Truestill will be rewritten entirely in Rust. Until then this codebase gets the least work that keeps
+it safe and green, and nothing that the rewrite will throw away.
+
+- **Do:** safety fixes (a security advisory in a RUNTIME dependency at critical or high severity; a bug
+  that loses data or gives a wrong answer) and keeping `main` and the scheduled lanes green (CI, the
+  nightly browser lane, the dependency audit).
+- **Do not:** refactors, clean-ups, new features or new tooling for code that will be replaced. A fix
+  gets the test that proves it and no more.
+- **Dependency advisories:** fix critical and high ones in runtime dependencies. List everything else
+  (medium and low, and anything in build or test tooling) in ONE open issue and leave it there.
+- **Revisit** when the rewrite starts, or when something here must outlive it.
+
 ## Read first, every session
 
 0. [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) - **start here.** Where the project

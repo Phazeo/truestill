@@ -292,13 +292,24 @@ def outcome(sha: str) -> str | None:
     runs = _gh(
         "run", "list", "--commit", sha, "--event", "push", "--limit", "10", "--json", _FIELDS
     )
+    if runs is not None and not runs:
+        # ⚠ A branch behind an open pull request is not on `main`, so CI ran for it as
+        # `pull_request`, never as `push`: asking only for push runs read "none" as UNKNOWN and
+        # refused every update of a pull request, green or not (2026-10-31). The pull request's
+        # own run is the fallback ONLY when the commit has no push run, so a main tip is still
+        # judged by its push run and never by a pull request run of the same sha.
+        runs = _gh(
+            "run", "list", "--commit", sha, "--event", "pull_request", "--limit", "10",
+            "--json", _FIELDS,
+        )  # fmt: skip
     if runs is None:
         return _unknown(f"about the tip {sha[:7]}", OVERRIDE)
     if not runs:
         return (
-            f"\npush gate: NO CI run exists for {sha[:7]}, the commit the remote already has, so "
-            f"whether it passed is UNKNOWN - and unknown is not green. Every push to main creates "
-            f"a run, so a missing one is a question rather than an ordinary absence.\n{_advice()}"
+            f"\npush gate: NO CI run exists for {sha[:7]} (as a push or as a pull request), the commit "
+            f"the remote already has, so whether it passed is UNKNOWN - and unknown is not green. "
+            f"Every push to main and every pull request creates a run, so a missing one is a "
+            f"question rather than an ordinary absence.\n{_advice()}"
         )
     run = runs[0]
     if run.get("status") in LIVE:
