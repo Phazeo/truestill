@@ -1,4 +1,4 @@
-"""The INSTALLED chain judges: pre-commit `hook-impl` -> the gate, with a real subject. P33.
+"""The INSTALLED chain judges: prek `hook-impl` -> the gate, with a real subject. P33.
 
 ⚠ **THE DEFECT, and why this file exists**: from `a173c42` (the `(agn)` rewrite) until P33 the
 gate was correct and INERT - pre-commit consumes git's pre-push stdin and forwards **nothing**
@@ -6,8 +6,9 @@ gate was correct and INERT - pre-commit consumes git's pre-push stdin and forwar
 no refs, exited 0, and pre-commit suppressed its "NOT gated" confession under ``Passed``. Two
 pushes were "allowed" that were never judged, one onto a RED tip. Every prior test drove the
 SCRIPT; none drove the INSTALLATION - a true answer from the unit was not the answer for the
-system. These tests drive `pre-commit hook-impl` itself, the exact process `.git/hooks/pre-push`
-execs, so the transport can never silently disarm again.
+system. These tests drive `prek hook-impl` itself, the exact process `.git/hooks/pre-push`
+execs, so the transport can never silently disarm again. (The defect was found under pre-commit;
+prek, which replaced it, is checked here to hand the gate the same `PRE_COMMIT_*` variables.)
 
 **The gh-independent half runs everywhere**: the probe seam records which transport delivered
 which subject, written before GitHub is ever asked. **The verdict half runs where `gh` can
@@ -23,6 +24,7 @@ contention half silently clean while `outcome()` - sha-keyed - judges the real t
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -46,7 +48,6 @@ def _origin_url() -> str:
 
 
 GREEN_TIP = "6ba3948c5c05dbc45b24edee5c14cf21826be2a3"  # its run: success, forever
-LOCAL = "72ee2c2649af0cd30caf2ecbe72b047c3195d93e"  # any real, distinct commit
 
 
 def _history_has(sha: str) -> bool:
@@ -60,7 +61,7 @@ def _history_has(sha: str) -> bool:
 
 
 needs_history = pytest.mark.skipif(
-    not (_history_has(RED_TIP) and _history_has(GREEN_TIP) and _history_has(LOCAL)),
+    not (_history_has(RED_TIP) and _history_has(GREEN_TIP)),
     reason="shallow checkout - hook-impl must resolve FROM..TO in the clone, and the verdict "
     "half judges real historical tips; the transport test below carries no such dependency",
 )
@@ -149,14 +150,18 @@ def _chain(
         ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, check=True
     ).stdout.strip()
     remote = remote_sha if remote_sha is not None else base
-    local = LOCAL if remote_sha is not None else head
+    # ⚠ The pushed commit is always the clone's own tip, a descendant of both historical tips: a real
+    # push adds commits on top of the remote tip. (An arbitrary old commit that the remote tip already
+    # contains is a push git itself refuses, and prek, unlike pre-commit, then runs no pre-push hook.)
+    local = head
     line = f"refs/heads/p33-chain-probe {local} refs/heads/p33-chain-probe {remote}\n"
     env = {k: v for k, v in os.environ.items() if k != "TRUESTILL_PUSH_ANYWAY"}
     env["TRUESTILL_PUSH_GATE_PROBE"] = str(probe)
+    # prek is a console script beside the interpreter (`Scripts/prek.exe` on Windows).
+    prek = shutil.which("prek", path=str(Path(sys.executable).parent))
+    assert prek, "prek is not installed next to this interpreter: run `uv sync --group dev`"
     cmd = [
-        sys.executable,
-        "-m",
-        "pre_commit",
+        prek,
         "hook-impl",
         f"--config={config}",
         "--hook-type=pre-push",
@@ -188,7 +193,7 @@ def test_the_transport_delivers_the_remote_tip_to_the_gate(tmp_path: Path) -> No
 
     recorded = probe.read_text(encoding="utf-8") if probe.exists() else ""
     assert "transport=pre-commit-env" in recorded, (
-        "the gate did not receive its subject from pre-commit's env: "
+        "the gate did not receive its subject from the hook runner's env: "
         f"probe={recorded!r}\nstdout={proc.stdout}\nstderr={proc.stderr}"
     )
     assert remote[:7] in recorded, "the subject the env carried is not the remote tip"

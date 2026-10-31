@@ -28,7 +28,10 @@ dev = [
     # engineered against for an unrelated reason.
     # NOT applied to the collection-order pass: see the Makefile's `test-order`.
     "pytest-xdist>=3.8.0",
-    "pre-commit>=4.6.1",
+    "prek==0.5.7",
+    # Read by tests that parse .pre-commit-config.yaml and the CI workflows. Declared here because it used to
+    # arrive only through pre-commit, which prek replaced.
+    "pyyaml>=6.0.3",
     # Starlette TestClient (truestill-app tests). httpx2 rather than httpx: httpx has had no
     # release since 2024 with issues and discussions closed, Pydantic maintains httpx2 as its
     # continuation, and starlette.testclient now tries `import httpx2` first and warns on the

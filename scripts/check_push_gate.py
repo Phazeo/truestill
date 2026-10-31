@@ -190,7 +190,7 @@ def subject(raw: str) -> tuple[str, list[tuple[str, str, str]]]:
     """``(transport, refs)`` - stdin when git speaks directly, pre-commit's env when it does not.
 
     The env triple is trusted only whole: a FROM without a TO is a mis-invocation, not a subject.
-    ``PRE_COMMIT_REMOTE_BRANCH`` defaults to nothing - if pre-commit ever stops setting it, the
+    ``PRE_COMMIT_REMOTE_BRANCH`` defaults to nothing - if the hook runner (prek, formerly pre-commit) ever stops setting it, the
     push is unidentifiable and the no-subject refusal in ``main`` says so, rather than this
     function guessing ``main``.
     """
