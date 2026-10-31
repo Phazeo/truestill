@@ -34,6 +34,7 @@ _TEST_ONLY = (
     "ruff",
     "mypy",
     "pre-commit",
+    "prek",
     "httpx",
     "coverage",
     "pyinstaller",

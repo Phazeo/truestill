@@ -6,7 +6,7 @@ others - see https://agents.md/) land on the same floor as tools that load `CLAU
 
 | Order | Open | Why |
 |---|---|---|
-| 1 | [`docs/GOLDEN_REPO_RULES.md`](docs/GOLDEN_REPO_RULES.md) | Commit identity, no-AI trailer, pre-commit install |
+| 1 | [`docs/GOLDEN_REPO_RULES.md`](docs/GOLDEN_REPO_RULES.md) | Commit identity, no-AI trailer, hook install (prek) |
 | 2 | [`CLAUDE.md`](CLAUDE.md) | This repo's only full agent entry (document map + working rules) |
 | 3 | [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) | Where the product stands; what to build next |
 

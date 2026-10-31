@@ -80,7 +80,7 @@ loses nothing; the lanes see everything eventually.
 > red `main` is the ordinary case; what the gate removes is doing it **without noticing**.
 > ⚠ It **fails open and says so** when `gh` cannot answer, and that gap is pinned by its own test -
 > a gate nobody can push past on a fresh clone gets uninstalled, taking its real coverage with it.
-> Activate with `uv run pre-commit install --hook-type pre-push`.
+> Activate with `uv run prek install --hook-type pre-push`.
 >
 > ⚠ **Its own guard failed on Windows first, and that is worth more than the gate.** The tests
 > stubbed `gh` and `git` as `#!/bin/sh` files on `PATH`. **Windows does not honour a shebang**, so

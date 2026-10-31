@@ -16,9 +16,9 @@ exiftool -ver
 uv sync --all-packages --group dev
 
 # 3) Hooks (both types)
-uv run pre-commit install
-uv run pre-commit install --hook-type commit-msg
-uv run pre-commit install --hook-type pre-push        # refuses a push onto a red run
+uv run prek install
+uv run prek install --hook-type commit-msg
+uv run prek install --hook-type pre-push        # refuses a push onto a red run
 
 # 4) Prove commit-msg guard blocks forbidden trailers
 git commit --allow-empty -m "test
