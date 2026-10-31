@@ -1,5 +1,6 @@
-# Run against staged changes with: uv run pre-commit run --all-files
-# Install the git hook with:       uv run pre-commit install
+# Hooks are run by prek (a drop-in for pre-commit that reads this file; it builds hook environments with uv).
+# Run against staged changes with: uv run prek run --all-files
+# Install the git hook with:       uv run prek install
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.0
@@ -86,7 +87,7 @@ repos:
 
   # Portable golden rule (docs/GOLDEN_REPO_RULES.md §1): no AI co-author trailer /
   # Anthropic/Claude email in history. Activate with:
-  #   uv run pre-commit install --hook-type commit-msg
+  #   uv run prek install --hook-type commit-msg
   - repo: local
     hooks:
       - id: no-ai-coauthor
@@ -109,7 +110,7 @@ repos:
       # was ever honoured, because nobody had separated them. Broken on 2026-08-21: three commits
       # landed on an already-red main. Refuses rather than waits, and
       # `TRUESTILL_PUSH_ANYWAY=1 git push` is how you say you mean it.
-      # Activate with: uv run pre-commit install --hook-type pre-push
+      # Activate with: uv run prek install --hook-type pre-push
       #
       # ⚠ **THE NAME IS A SUBJECT, NOT A CLAIM, and it used to be a claim.** pre-commit prints
       # `<name> ... Passed` whenever a hook exits 0 - including when it was overridden or fell
@@ -136,7 +137,8 @@ repos:
       # its own name - TRUESTILL_PUSH_CANCELS_THE_RUN=1 - and the audit lines say which check
       # each one waived, because "nothing was verified" overstated what was skipped.
       #
-      # ⚠ And pre-commit DOES NOT FORWARD git's pre-push stdin to hooks (observed: a probe hook
+      # ⚠ (Measured under pre-commit; prek 0.5.7 behaves the same, checked 2026-10-31 by
+      # test_push_gate_runs_under_prek.py.) And pre-commit DOES NOT FORWARD git's pre-push stdin to hooks (observed: a probe hook
       # read `stdin:[]` while git had supplied the ref line). Subjects come from
       # PRE_COMMIT_FROM_REF (the REMOTE tip sha), PRE_COMMIT_TO_REF (the local sha) and
       # PRE_COMMIT_REMOTE_BRANCH - which is why the gate fell inert from a173c42 until P33.

@@ -3,7 +3,7 @@
 **Standalone.** This file is the whole package. Do not assume any other standards
 document exists in the target repo. Drop it in first; wire the hook; then continue product work.
 
-**Owns only:** commit identity, no AI co-author in history, and pre-commit install discipline.
+**Owns only:** commit identity, no AI co-author in history, and hook install discipline (prek).
 It does **not** replace the repo's real test gate (`make check`, `npm test`, CI, or whatever that
 repo uses).
 
@@ -18,19 +18,19 @@ rules here.
    `GOLDEN_REPO_RULES.md` if the repo has no `docs/` yet - pick one path and keep it).
 2. Create `scripts/check_commit_msg.py` with the script in §1 (create `scripts/` if missing).
 3. Ensure `.pre-commit-config.yaml` exists and includes the `no-ai-coauthor` stanza in §2.
-4. If the repo has no pre-commit yet: add `pre-commit` as a dev dependency and a minimal config
+4. If the repo has no hook runner yet: add `prek` as a dev dependency (it reads `.pre-commit-config.yaml`) and a minimal config
    that at least contains that stanza (lint/format hooks are recommended but not required by this
    file).
 5. Install hooks:
 
 ```sh
-pre-commit install
-pre-commit install --hook-type commit-msg
+prek install
+prek install --hook-type commit-msg
 # only if the repo defines pre-push hooks:
-pre-commit install --hook-type pre-push
+prek install --hook-type pre-push
 ```
 
-(Use `uv run pre-commit …` when the project is a uv workspace.)
+(Use `uv run prek …` when the project is a uv workspace.)
 
 6. Prove the commit-msg guard once:
 

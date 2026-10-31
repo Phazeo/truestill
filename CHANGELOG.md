@@ -51,6 +51,8 @@ Every screen has been redrawn.
 
 ### Changed
 
+- **Git hooks run with prek**, a drop-in for pre-commit (same `.pre-commit-config.yaml`; install with `uv run prek install`). `virtualenv` and `filelock` leave `uv.lock` with it, 20 of the dependency audit's advisories. The push gate's tests drive `prek hook-impl`, and prek hands the gate the same `PRE_COMMIT_*` variables.
+
 - **The whole interface has been redrawn.** A warm canvas, a single dark rail, one accent colour,
   and a type scale cut from eight sizes to six. The Organize screen is rebuilt around a stepper
   that says where you are, one card instead of four, counts that stay put while you read them,
