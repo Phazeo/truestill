@@ -164,7 +164,7 @@ def _gh_once(*args: str) -> list[dict[str, object]] | None:
         done = subprocess.run(
             ["gh", *args], capture_output=True, text=True, check=False, timeout=20
         )
-    except OSError, subprocess.SubprocessError:
+    except (OSError, subprocess.SubprocessError):
         return None
     if done.returncode != 0:
         return None
