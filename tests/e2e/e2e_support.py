@@ -12,14 +12,18 @@ import secrets
 import socket
 import subprocess
 import threading
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import pytest
 import uvicorn
 from PIL import Image
 from playwright.sync_api import Page, expect
+from truestill_app.jobs import JobManager
 from truestill_app.server import create_app
+from truestill_core.progress import Progress
 
 #: Loopback only. The app binds here in production too; nothing about this harness widens it.
 HOST = "127.0.0.1"
@@ -270,3 +274,63 @@ def release_held(held: list[Any], *, body: str | None = None) -> None:
         else:
             route.fulfill(status=200, content_type="application/json", body=body)
     held.clear()
+
+
+#: A held job waits this long for its Cancel before it carries on. Long enough that a slow runner's
+#: click always lands first, short enough that a test whose click never comes fails instead of
+#: hanging the worker thread (and the suite) forever.
+HOLD_LIMIT_SECONDS = 60.0
+
+
+@dataclass(slots=True)
+class JobHold:
+    """The next job the app starts, held mid-run until its Cancel request has arrived."""
+
+    #: Set from the worker thread when the job has reported ``after`` items and is held.
+    reached: threading.Event = field(default_factory=threading.Event)
+    #: Set from the worker thread when the hold ended. ``True`` means Cancel did, ``False`` that
+    #: the limit ran out first (the test's click never came).
+    released_by_cancel: bool | None = None
+
+
+def hold_the_next_job_until_cancelled(monkeypatch: pytest.MonkeyPatch, *, after: int) -> JobHold:
+    """Make the next job wait inside its ``after``-th progress report until Cancel is clicked.
+
+    **Why this exists.** The cancel tests used to click Cancel on a job that was running at full
+    speed and hope it was still running: a 400-file organize finishes in about a second, so on a
+    slow shared runner the Cancel button had gone before Playwright's click checks finished
+    (``element is not visible``, ``Page.click: Timeout 15000ms exceeded`` - the scheduled WebKit
+    leg failed this way on three days). Nothing about a slower machine changes WHAT cancelling
+    does, only whether the click gets there in time, so the job is held until it does.
+
+    **How.** The app runs in this process (``boot_app``), so the job manager can be wrapped
+    here. The job's worker blocks inside its progress callback on the job's own ``cancel`` event,
+    the one the Cancel request sets: the job cannot finish before the cancel arrives, and once it
+    does, the operation sees it at its next check, exactly as a user's cancel lands.
+
+    Only the NEXT job is held: arm this just before the click that starts the job under test, not
+    before the preview that precedes it. Undone when the test ends (``monkeypatch``).
+    """
+    hold = JobHold()
+    start = JobManager.start
+    armed = True
+
+    def held_start(self: JobManager, target: Any, **kwargs: Any) -> Any:
+        nonlocal armed
+        if not armed:
+            return start(self, target, **kwargs)
+        armed = False
+
+        def held_target(progress: Callable[[Progress], None], cancel: threading.Event) -> Any:
+            def held_progress(update: Progress) -> None:
+                progress(update)
+                if update.done >= after and not hold.reached.is_set():
+                    hold.reached.set()
+                    hold.released_by_cancel = cancel.wait(HOLD_LIMIT_SECONDS)
+
+            return target(held_progress, cancel)
+
+        return start(self, held_target, **kwargs)
+
+    monkeypatch.setattr(JobManager, "start", held_start)
+    return hold

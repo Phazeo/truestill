@@ -9,10 +9,10 @@ cannot provide.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
-from e2e_support import AppServer, open_screen
+import pytest
+from e2e_support import AppServer, hold_the_next_job_until_cancelled, open_screen
 from playwright.sync_api import Page, expect
 from truestill_core.catalog import Catalog
 from truestill_core.destinations.local import LocalDestination
@@ -254,13 +254,15 @@ def test_undo_preview_surfaces_refusals_with_reasons(
 
 
 def test_cancel_during_undo_apply_stops_and_leaves_the_journal_resumable(
-    ui: Page, app_server: AppServer, tmp_path: Path
+    ui: Page, app_server: AppServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Cancel mid-apply must stop short of spending every row so a later undo can finish."""
+    """Cancel mid-apply must stop short of spending every row so a later undo can finish.
+
+    The apply is HELD after its fifth row until the Cancel request arrives (``e2e_support``). It
+    used to race the click on a big corpus and a dropped page cache, and lost on slow runners.
+    """
     drive = tmp_path / "drive"
-    # Many modest files: relocate+re-hash per row is what Cancel races. A small corpus finishes
-    # from page cache between Preview and Apply before the click lands.
-    uuid = _seed_armed_drive(app_server.db, drive, n=250, payload_bytes=32_768)
+    uuid = _seed_armed_drive(app_server.db, drive, n=30, payload_bytes=32_768)
     with Catalog(app_server.db) as catalog:
         before = catalog.reversible_migration(uuid)
         assert before is not None
@@ -269,19 +271,15 @@ def test_cancel_during_undo_apply_stops_and_leaves_the_journal_resumable(
     _open_settings_drive(ui, drive)
     ui.locator("#mig-undo-panel button", has_text="Preview undo").click()
     expect(ui.locator("#mig-undo-panel [data-typed-confirm]")).to_be_visible(timeout=180_000)
-    # Drop page cache so apply cannot finish from RAM before Cancel is pressed.
-    for path in drive.rglob("*.jpg"):
-        fd = os.open(path, os.O_RDONLY)
-        try:
-            os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
-        finally:
-            os.close(fd)
 
     ui.fill("#mig-undo-panel [data-typed-confirm]", "undo")
+    hold = hold_the_next_job_until_cancelled(monkeypatch, after=5)
     ui.locator("#mig-undo-panel [data-typed-go]").click()
     expect(ui.locator("#undo-card")).to_be_visible()
+    assert hold.reached.wait(60), "the undo never got as far as the hold"
     ui.click("#undo-cancel")
     expect(ui.locator("#undo-card")).to_be_hidden(timeout=180_000)
+    assert hold.released_by_cancel, "the undo carried on before Cancel arrived"
 
     with Catalog(app_server.db) as catalog:
         mid = catalog.reversible_migration(uuid)
