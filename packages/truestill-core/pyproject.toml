@@ -32,7 +32,7 @@ dependencies = [
     # Imported directly by `dedup.py` for the packed perceptual match, so it is declared
     # rather than leaned on transitively. Argued in §7 of IMPLEMENTATION_STANDARDS.md.
     "numpy>=2.5.1",
-    "pillow>=12.3.0",
+    "pillow>=13.0.0",
     "pillow-heif>=1.5.0",
     # Required, not probed. It was an optional import until 2026-08-04, and "optional" is what
     # made an absent trash backend a *destructive* state rather than a degraded one: with no
