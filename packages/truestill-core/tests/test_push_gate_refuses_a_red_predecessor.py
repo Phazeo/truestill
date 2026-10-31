@@ -81,9 +81,12 @@ def gate(monkeypatch: pytest.MonkeyPatch) -> Any:
     return check_push_gate
 
 
-def _run(sha: str, status: str, conclusion: str | None, *, rid: int = 1) -> dict[str, object]:
+def _run(
+    sha: str, status: str, conclusion: str | None, *, rid: int = 1, event: str = "push"
+) -> dict[str, object]:
     return {
         "databaseId": rid,
+        "event": event,
         "headSha": sha,
         "headBranch": "main",
         "status": status,
@@ -114,6 +117,9 @@ def _table(*runs: dict[str, object]) -> Any:
         branch = opt("--branch")
         if branch is not None:
             rows = [r for r in rows if r.get("headBranch") == branch]
+        event = opt("--event")
+        if event is not None:
+            rows = [r for r in rows if r.get("event") == event]
         limit = opt("--limit")
         if limit is not None:
             rows = rows[: int(limit)]
@@ -549,3 +555,74 @@ def test_a_gh_that_never_answers_is_unknown_after_the_bound(
     monkeypatch.setattr(gate.time, "sleep", lambda _s: None)
     assert gate._gh("run", "list") is None
     assert len(attempts) == gate.GH_ATTEMPTS, "the bound is the bound"
+
+
+# --- a pull request's own run counts when the commit has no push run -----------------------
+#
+# A branch behind an open pull request is not on `main`, so CI runs for its commits as
+# `pull_request`, never as `push`. The gate asked only for push runs, read "none" as UNKNOWN and
+# refused every update of a pull request, green or not (seen 2026-10-31 on a tip whose pull
+# request run was green). `--event push` stays the first question: it is what keeps a main tip
+# from answering with the nightly run of the same sha.
+
+
+def test_a_green_pull_request_run_allows_the_push(
+    gate: Any, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(
+        gate, "_gh", _table(_run(_SHA, "completed", "success", event="pull_request"))
+    )
+
+    assert gate.main() == _ALLOWED
+    assert capsys.readouterr().err == "", "an ordinary pull request update was not silent"
+
+
+def test_a_red_pull_request_run_refuses_the_push(
+    gate: Any, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(
+        gate, "_gh", _table(_run(_SHA, "completed", "failure", event="pull_request", rid=7))
+    )
+
+    assert gate.main() != _ALLOWED
+    err = capsys.readouterr().err
+    assert "FAILURE" in err
+    assert "run 7" in err
+
+
+def test_a_pull_request_run_still_going_refuses_the_push(
+    gate: Any, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Pushing onto a running pull request check cancels it (its concurrency group)."""
+    monkeypatch.setattr(gate, "_gh", _table(_run(_SHA, "in_progress", None, event="pull_request")))
+
+    assert gate.main() != _ALLOWED
+    assert "CANCELS" in capsys.readouterr().err
+
+
+def test_a_push_run_still_decides_when_there_is_one(
+    gate: Any, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The pull request run is the fallback, never a second opinion: a main tip with a green push
+    run is judged by it, whatever a pull request run of the same sha says."""
+    monkeypatch.setattr(
+        gate,
+        "_gh",
+        _table(
+            _run(_SHA, "completed", "success", rid=1),
+            _run(_SHA, "completed", "failure", event="pull_request", rid=2),
+        ),
+    )
+
+    assert gate.main() == _ALLOWED
+    assert capsys.readouterr().err == ""
+
+
+def test_the_nightly_run_of_the_sha_does_not_stand_in(
+    gate: Any, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The sixty-ninth member, kept: only a push or pull request run answers for a commit."""
+    monkeypatch.setattr(gate, "_gh", _table(_run(_SHA, "completed", "success", event="schedule")))
+
+    assert gate.main() != _ALLOWED
+    assert "NO CI run exists" in capsys.readouterr().err
