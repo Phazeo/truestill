@@ -1,0 +1,49 @@
+name: Bug report
+description: Something Truestill did that it should not have, or did not do.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bug reports and ideas are welcome. Code contributions are not accepted (see CONTRIBUTING.md).
+        Do not attach photographs or paths you consider private.
+  - type: input
+    id: version
+    attributes:
+      label: Truestill version
+      description: Output of `truestill --version`.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Linux, Windows, macOS]
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where it happened
+      options: [Command line, Web UI, Both, Not sure]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What you did
+      description: The commands or clicks, in order.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Error text or `truestill self-check` output. Remove anything private.
+      render: text

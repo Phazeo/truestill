@@ -10,7 +10,8 @@ authors = [{ name = "Truestill contributors" }]
 # leg was added, green on every run, which is what made the move a bump rather than a gamble.
 requires-python = ">=3.14"
 readme = "README.md"
-license = "Apache-2.0"
+license = "LicenseRef-PolyForm-Strict-1.0.0"
+license-files = ["LICENSE"]
 keywords = ["photos", "media", "organizer", "deduplication", "backup", "exif"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -45,8 +46,8 @@ dependencies = [
     # algorithm; this is the choice of binding, and it is a D7 decision because D7 forbids a
     # copyleft dependency in a published package without an explicit superseding one.
     #
-    # **Apache-2.0** (PyPI metadata, checked 2026-09-11) - the same licence as this project, so
-    # D7 is satisfied outright rather than by argument. The alternative, `cryptography`, is
+    # **Apache-2.0** (PyPI metadata, checked 2026-09-11) - permissive, so D7's no-copyleft rule
+    # (kept by D22) is satisfied outright rather than by argument. The alternative, `cryptography`, is
     # `Apache-2.0 OR BSD-3-Clause` and also clears D7; the choice between them was made on
     # surface, not licence:
     #

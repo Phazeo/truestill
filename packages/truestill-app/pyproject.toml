@@ -5,7 +5,8 @@ description = "Local web UI for Truestill: a Starlette server + browser front-en
 authors = [{ name = "Truestill contributors" }]
 requires-python = ">=3.14"
 readme = "README.md"
-license = "Apache-2.0"
+license = "LicenseRef-PolyForm-Strict-1.0.0"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",
