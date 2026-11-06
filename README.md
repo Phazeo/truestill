@@ -330,8 +330,9 @@ make e2e           # browser end-to-end suite (opt-in; not part of `make check`)
 `make check` is green on a fresh clone with no browser installed - the E2E layer is
 deliberately opt-in.
 
-Contributing: [`CLAUDE.md`](CLAUDE.md) is the day-to-day guide - repo shape, what to
-run, and which document answers which question.
+Bug reports and ideas are welcome in Issues; code contributions are not accepted
+([`CONTRIBUTING.md`](CONTRIBUTING.md)). [`CLAUDE.md`](CLAUDE.md) is the day-to-day guide - repo
+shape, what to run, and which document answers which question.
 
 ## Documentation
 
@@ -340,9 +341,12 @@ ships next, and the standing rules. [`CLAUDE.md`](CLAUDE.md) carries the full do
 
 ## Licence
 
-Truestill is licensed under the [Apache License 2.0](LICENSE). The published source is
-open-core: the repository is Apache-2.0; paid Pro capabilities (when they ship) attach through
-the capability seam rather than a separate closed tree (`docs/DECISIONS.md` D7, D6).
+Truestill is licensed under [PolyForm Strict 1.0.0](LICENSE).
+
+- Free for personal and other noncommercial use.
+- Business use needs a separate commercial licence.
+- v0.1.0 and v0.1.1 were released under Apache-2.0 and stay so.
+- Bug reports and ideas are welcome in Issues; code contributions are not accepted.
 
 > **Status:** **published and pre-1.0.** Which release is current is not written here - the
 > [Releases](https://github.com/dinesh-ad/truestill/releases) page and `CHANGELOG.md` are the

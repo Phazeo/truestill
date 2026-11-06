@@ -465,7 +465,7 @@ separate closed codebase.
 - Open-core does **not** mean a free/crippled build and a proprietary build of the same tree.
   Pro is entitlement and gating (D5/D6), not a second source licence.
 
-**Status:** Settled and current. Recorded here because the packages already shipped
+**Status:** Superseded by D22 (2026-11-05). Recorded here because the packages already shipped
 `Apache-2.0` and the root `LICENSE` existed; the stance itself had not been written into this
 file.
 
@@ -1614,3 +1614,66 @@ gone" from this file and applies it to that one has misread both.
 **Status:** Settled as a decision. The gate is removed from `PROJECT_STATUS.md` §1 and §2b, from
 D16 §5's co-blocker list and from `(afg)`; `(aad)`'s GPLv3 item keeps its heading and gets a
 pointer here. No code attaches to this.
+
+---
+
+## D22. Source licence: PolyForm Strict 1.0.0; no outside code contributions
+
+**Decision (the maintainer, 2026-11-05).** Supersedes D7. The source in this repository is
+licensed under PolyForm Strict 1.0.0. Bug reports and ideas are welcome in Issues; code
+contributions are not accepted.
+
+**Numbering:** D22, because D11 to D21 were taken.
+
+### Context
+
+D7 chose Apache-2.0 open-core. Apache-2.0 lets anyone sell the product, including a hosted or
+repackaged copy, while the maintainer's income is the paid yearly licence (D18). The product is a
+free-for-personal-use tool with paid commercial use.
+
+### Decision
+
+- `LICENSE` is the PolyForm Strict 1.0.0 text unchanged, with two Required Notice lines above it.
+- Package metadata is `license = "LicenseRef-PolyForm-Strict-1.0.0"` with `license-files`
+  (PEP 639; the licence has no SPDX identifier).
+- `CONTRIBUTING.md` and the README say: free for personal use, business use needs a commercial
+  licence, issues welcome, no code contributions.
+
+### Why
+
+- **PolyForm Strict text.** It permits "any noncommercial purpose", which includes personal use,
+  and the grant excludes "distributing the software or making changes or new works based on the
+  software" (https://polyformproject.org/licenses/strict/1.0.0). That is the shape wanted:
+  use freely, no forks, no resale.
+- **SQLite, copyright page.** States that SQLite is open source but not open contribution
+  (https://sqlite.org/copyright.html). A long-lived, widely used tool with the same policy.
+- **GitHub, 2026-02-13 changelog** on pull request settings: a repository can restrict who may
+  open pull requests, so the policy can be enforced rather than only written down.
+
+### Alternatives considered
+
+- **Keep Apache-2.0 (D7).** Lost: it allows commercial resale and hosting with no payment, which
+  is the one use that costs the paid licence its customers.
+- **PolyForm Noncommercial.** Lost: it permits changes and new works, so forks and
+  redistribution of modified copies are allowed. Strict keeps the code as shipped.
+- **All rights reserved.** Lost: no licence text at all gives users no written permission for
+  personal use, and GitHub's terms then allow only viewing and forking. A standard licence says
+  plainly what is free.
+- **Accept pull requests with a CLA.** Lost: review and CLA administration cost maintainer time
+  the rewrite plan does not have, and contributors would still expect a say in a codebase that
+  is to be replaced in Rust.
+
+### Consequences
+
+- v0.1.0 and v0.1.1 stay Apache-2.0. Those grants are irrevocable and nothing here reaches them.
+- The next release is PolyForm Strict.
+- Pro features themselves stay in a private repository. This tree holds only the capability
+  seam and the licence check that gate them; the check embeds one public verification key and
+  no secret.
+- All human commits in this repository are the owner's, so relicensing needed no one else's
+  consent. That holds only while no outside code is accepted, which is why contributions are
+  closed.
+- The Debian copyright file and the three package `pyproject.toml` files name the new licence;
+  a test keeps the three package `LICENSE` copies identical to the root.
+
+**Status:** Settled.

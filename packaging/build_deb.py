@@ -110,7 +110,7 @@ Source: https://github.com/dinesh-ad/truestill
 
 Files: *
 Copyright: truestill
-License: Apache-2.0
+License: PolyForm-Strict-1.0.0
 
 Files: usr/lib/truestill/_internal/bin/*
 Copyright: Phil Harvey
@@ -128,7 +128,11 @@ Files: usr/share/icons/hicolor/*
 Copyright: truestill
 Comment: The Truestill mark, rendered from brand/truestill-mark.svg. Drawn
  artwork, not a font; see brand/PROVENANCE.md.
-License: Apache-2.0
+License: PolyForm-Strict-1.0.0
+
+License: PolyForm-Strict-1.0.0
+ Free for personal and other noncommercial use. Business use needs a separate
+ commercial licence. Full text: https://polyformproject.org/licenses/strict/1.0.0
 """
 
 

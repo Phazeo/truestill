@@ -13,6 +13,12 @@ being counted as somewhere your photograph lives.
 
 Every screen has been redrawn.
 
+### Changed
+
+- **The source licence is now PolyForm Strict 1.0.0.** Free for personal and other
+  noncommercial use; business use needs a commercial licence; code contributions are not accepted.
+  v0.1.0 and v0.1.1 were released under Apache-2.0 and stay so.
+
 ### Added
 
 - **The command line is in the packages.** Until now the releases contained the web UI only, and
