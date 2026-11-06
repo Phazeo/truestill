@@ -29,6 +29,6 @@ def test_every_package_declares_the_polyform_strict_licenseref() -> None:
 
 def test_the_root_licence_is_polyform_strict_with_its_required_notices() -> None:
     lines = (ROOT / "LICENSE").read_text("utf-8").splitlines()
-    assert lines[0] == "Required Notice: Copyright 2026 Dinesh A"
+    assert lines[0] == "Required Notice: Copyright 2026 Dinesh Allimuthu"
     assert lines[1].startswith("Required Notice: Free for personal and other noncommercial use.")
     assert "# PolyForm Strict License 1.0.0" in lines

@@ -1623,8 +1623,7 @@ pointer here. No code attaches to this.
 licensed under PolyForm Strict 1.0.0. Bug reports and ideas are welcome in Issues; code
 contributions are not accepted.
 
-**Numbering.** The request for this change called it D11; D11 is the mypy decision and D21 was the
-last, so this is D22. D7's status line points here.
+**Numbering:** D22, because D11 to D21 were taken.
 
 ### Context
 
@@ -1646,9 +1645,8 @@ free-for-personal-use tool with paid commercial use.
   and the grant excludes "distributing the software or making changes or new works based on the
   software" (https://polyformproject.org/licenses/strict/1.0.0). That is the shape wanted:
   use freely, no forks, no resale.
-- **Litestream, "not open contribution".** Litestream's README states the project is open source
-  but not open contribution, and takes bug reports but not feature pull requests. A working
-  precedent for a widely used tool.
+- **SQLite, copyright page.** States that SQLite is open source but not open contribution
+  (https://sqlite.org/copyright.html). A long-lived, widely used tool with the same policy.
 - **GitHub, 2026-02-13 changelog** on pull request settings: a repository can restrict who may
   open pull requests, so the policy can be enforced rather than only written down.
 
@@ -1669,7 +1667,9 @@ free-for-personal-use tool with paid commercial use.
 
 - v0.1.0 and v0.1.1 stay Apache-2.0. Those grants are irrevocable and nothing here reaches them.
 - The next release is PolyForm Strict.
-- Pro code stays in a private repository. Anything written for Pro does not enter this tree.
+- Pro features themselves stay in a private repository. This tree holds only the capability
+  seam and the licence check that gate them; the check embeds one public verification key and
+  no secret.
 - All human commits in this repository are the owner's, so relicensing needed no one else's
   consent. That holds only while no outside code is accepted, which is why contributions are
   closed.
